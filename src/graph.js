@@ -11,6 +11,7 @@ export default class graph {
     this.data = []
     this.outerPadding = this.options.outerPadding
     this.innerPadding = this.options.innerPadding
+    this.mousePos = {x: undefined, y: undefined}
     this.datapoints = []
     this.images = []
     this.setSize()
@@ -34,7 +35,7 @@ export default class graph {
     ]
   }
   updateHoverLine (e) {
-    this.hoverLine = e.offsetX
+    this.mousePos = {x: e.offsetX, y: e.offsetY}
     this.draw()
   }
   runFeature (key) {
@@ -166,13 +167,11 @@ export default class graph {
     }
     for (let d in data) {
       let point = data[d].point
-      console.log(this.crest)
       this.datapoints.push(
-        { display: point.display || 'yo',
-          x: (Math.round(this.drawableWidth / (data.length) * d) + this.innerPadding.left + this.outerPadding.left),
+        { display: point.display || point.value,
+          x: (Math.round(this.drawableWidth / (data.length-1) * d) + this.innerPadding.left + this.outerPadding.left),
           y: Math.round((this.drawableHeight / diff) * (this.crest - parseInt(point.value))) + this.innerPadding.top + this.outerPadding.top })
     }
-    console.log(this.datapoints)
   }
   setActive (active) {
     this.options.active = active
@@ -206,10 +205,12 @@ export default class graph {
   }
   withHoverLine () {
     let split = (this.drawableWidth / (this.datapoints.length)) / 2
-    let paddingTotal = (this.outerPadding.left + this.outerPadding.right + this.innerPadding.left + this.innerPadding.right)
+    // let paddingTotal = (this.outerPadding.left + this.outerPadding.right + this.innerPadding.left + this.innerPadding.right)
+     
+    let paddingTotal = (this.outerPadding.left)
     let options = this.options.aesthetics.hoverLine
     for (let i in this.datapoints) {
-      if ((Math.abs(this.hoverLine - this.datapoints[i].x) - paddingTotal) < split) {
+      if ((Math.abs(this.mousePos.x - this.datapoints[i].x) - paddingTotal) < split) {
         let x = this.datapoints[i].x
         let y = this.datapoints[i].y
 
@@ -292,8 +293,6 @@ export default class graph {
   }
   withCircles () {
     const { colour, radius, border, borderRadius, borderColour } = this.options.aesthetics.circles
-    console.log(borderRadius)
-    console.log(radius + borderRadius)
     this.datapoints.forEach(d => {
       if (border) {
         this.lib.setFillStyle(borderColour)
@@ -355,7 +354,6 @@ export default class graph {
   }
   withLine () {
     let data = this.datapoints
-    console.log(data)
     this.lib.setLineWidth(this.options.aesthetics.line.width)
     this.lib.drawLines([{ x: this.outerPadding.left + this.innerPadding.left, y: data[0].y }, ...data])
     this.lib.setStrokeStyle(this.options.aesthetics.line.colour)
