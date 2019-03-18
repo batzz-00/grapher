@@ -139,6 +139,9 @@ export default class CanvasLibrary {
   clear () {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
   }
+  textMetrics (text) {
+    return this.ctx.measureText(text)
+  }
   // mac retina screen scalingx
   scaleCanvas (canvas, context, width, height) {
     // assume the device pixel ratio is 1 if the browser doesn't specify it

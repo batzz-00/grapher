@@ -1,4 +1,8 @@
 import CanvasLibrary from './helpers/canvasLibrary'
+
+import Shadow from './lib/ext/shadow'
+import Renderer from './lib/ext/renderer'
+
 export default class graph {
   constructor (canvas, parent, options = {}) {
     this.canvas = canvas
@@ -11,7 +15,7 @@ export default class graph {
     this.data = []
     this.outerPadding = this.options.outerPadding
     this.innerPadding = this.options.innerPadding
-    this.mousePos = {x: undefined, y: undefined}
+    this.mousePos = { x: undefined, y: undefined }
     this.datapoints = []
     this.images = []
     this.setSize()
@@ -35,7 +39,7 @@ export default class graph {
     ]
   }
   updateHoverLine (e) {
-    this.mousePos = {x: e.offsetX, y: e.offsetY}
+    this.mousePos = { x: e.offsetX, y: e.offsetY }
     this.draw()
   }
   runFeature (key) {
@@ -131,7 +135,6 @@ export default class graph {
     this.canvas.height = this.height
     this.lib.scaleCanvas(this.canvas, this.ctx, this.width, this.height)
   }
-
   update () {
     let data = this.data
     let trough, crest
@@ -169,7 +172,7 @@ export default class graph {
       let point = data[d].point
       this.datapoints.push(
         { display: point.display || point.value,
-          x: (Math.round(this.drawableWidth / (data.length-1) * d) + this.innerPadding.left + this.outerPadding.left),
+          x: (Math.round(this.drawableWidth / (data.length - 1) * d) + this.innerPadding.left + this.outerPadding.left),
           y: Math.round((this.drawableHeight / diff) * (this.crest - parseInt(point.value))) + this.innerPadding.top + this.outerPadding.top })
     }
   }
@@ -181,6 +184,7 @@ export default class graph {
   }
   draw () {
     this.lib.clear()
+    this.setSize()
     for (let i in this.options.build) {
       this.runFeature(this.options.build[i])
     }
@@ -190,12 +194,8 @@ export default class graph {
     this.update()
     this.draw()
   }
-  getImage () {
-    for (let i in this.images.images) {
-      if (this.images.images[i].type === this.options.type) {
-        return this.images.images[i].img
-      }
-    }
+  getBuffer () {
+
   }
   withLastUpdated () {
     this.lib.setTextBaseline('top')
@@ -206,7 +206,7 @@ export default class graph {
   withHoverLine () {
     let split = (this.drawableWidth / (this.datapoints.length)) / 2
     // let paddingTotal = (this.outerPadding.left + this.outerPadding.right + this.innerPadding.left + this.innerPadding.right)
-     
+
     let paddingTotal = (this.outerPadding.left)
     let options = this.options.aesthetics.hoverLine
     for (let i in this.datapoints) {
@@ -336,12 +336,16 @@ export default class graph {
     return this
   }
   withShadow () {
-    let data = this.datapoints
-    this.lib.drawPolygon([{ x: this.padding.left, y: data[0].y },
-      ...data, { x: data[data.length - 1].x, y: this.height - this.padding.bottom }, { x: this.padding.left, y: this.height - this.padding.bottom }])
+    // this.lib.drawPolygon([{ x: pad.left, y: data[0].y },
+    //   ...data, { x: data[data.length - 1].x, y: this.height - pad.bottom }, { x: pad.left, y: this.height - pad.bottom }])
     let gradient = this.lib.createLinearGradient(0, 0, 0, (this.height * 1.2), this.options.aesthetics.shadow.gradient)
-    this.lib.setFillStyle(gradient)
-    this.lib.fill()
+    // this.lib.setFillStyle(gradient)
+    // this.lib.fill()
+    let renderer = new Renderer(this.lib)
+    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: gradient }, this.datapoints, this.lib)
+    renderer.add(o.draw())
+    renderer.render()
+    o.draw()
     return this
   }
   withFullShadow () {
@@ -365,6 +369,9 @@ export default class graph {
     this.lib.setFont(this.options.aesthetics.font, this.options.aesthetics.labels.fontsize, 600)
     this.lib.setTextAlign('left')
     this.lib.setTextBaseline('middle')
+
+    this.drawableWidth -= this.lib.textMetrics(this.crest).width
+
     this.lib.drawText(this.crest, this.outerPadding.left + this.innerPadding.left + this.drawableWidth + 3, this.outerPadding.top + this.innerPadding.top)
 
     this.lib.setTextAlign('left')
