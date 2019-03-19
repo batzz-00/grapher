@@ -17,7 +17,7 @@ export default class sprite {
     this.fill = true
     this.fillStyle = fill
   }
-  setStroke (colour, width) {
+  setStroke (colour, width = 1) {
     this.stroke = true
     this.strokeStyle = { colour, width }
   }

@@ -1,6 +1,8 @@
 import CanvasLibrary from './helpers/canvasLibrary'
 
-import Shadow from './lib/ext/shadow'
+import Shadow from './lib/ext/components/shadow'
+import Line from './lib/ext/components/line'
+
 import Renderer from './lib/ext/renderer'
 
 export default class graph {
@@ -8,6 +10,7 @@ export default class graph {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.lib = new CanvasLibrary(this.ctx, this.canvas)
+    this.renderer = new Renderer(this.lib)
     this.height = this.canvas.height
     this.options = this.defaultSettings(options)
     this.crest = this.trough = 0
@@ -41,6 +44,7 @@ export default class graph {
   updateHoverLine (e) {
     this.mousePos = { x: e.offsetX, y: e.offsetY }
     this.draw()
+    this.renderer.render()
   }
   runFeature (key) {
     for (let k in this.features) {
@@ -57,6 +61,7 @@ export default class graph {
     }
     this.update()
     this.draw()
+    this.renderer.render()
   }
   setOptions (options) {
     this.options = this.defaultSettings(options)
@@ -336,32 +341,26 @@ export default class graph {
     return this
   }
   withShadow () {
-    // this.lib.drawPolygon([{ x: pad.left, y: data[0].y },
-    //   ...data, { x: data[data.length - 1].x, y: this.height - pad.bottom }, { x: pad.left, y: this.height - pad.bottom }])
     let gradient = this.lib.createLinearGradient(0, 0, 0, (this.height * 1.2), this.options.aesthetics.shadow.gradient)
-    // this.lib.setFillStyle(gradient)
-    // this.lib.fill()
-    let renderer = new Renderer(this.lib)
-    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: gradient }, this.datapoints, this.lib)
-    renderer.add(o.draw())
-    renderer.render()
-    o.draw()
+    let data = this.datapoints
+    let points = [{ x: this.innerPadding.left, y: data[0].y },
+      ...data, { x: data[data.length - 1].x, y: this.height - this.innerPadding.bottom }, { x: this.innerPadding.left, y: this.height - this.innerPadding.bottom }]
+    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: gradient }, points)
+    this.renderer.add(o.getObject())
     return this
   }
   withFullShadow () {
     let data = this.datapoints
-    this.lib.drawPolygon([{ x: this.padding.left, y: data[0].y },
-      ...data, { x: data[data.length - 1].x, y: this.height - this.padding.bottom }, { x: this.padding.left, y: this.height - this.padding.bottom }])
-    this.lib.setFillStyle(this.options.aesthetics.fullShadow.colour)
-    this.lib.fill()
+    let points = [{ x: this.innerPadding.left, y: data[0].y },
+      ...data, { x: data[data.length - 1].x, y: this.height - this.innerPadding.bottom }, { x: this.innerPadding.left, y: this.height - this.innerPadding.bottom }]
+    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: this.options.aesthetics.fullShadow.colour }, points)
+    this.renderer.add(o.getObject())
     return this
   }
   withLine () {
-    let data = this.datapoints
-    this.lib.setLineWidth(this.options.aesthetics.line.width)
-    this.lib.drawLines([{ x: this.outerPadding.left + this.innerPadding.left, y: data[0].y }, ...data])
-    this.lib.setStrokeStyle(this.options.aesthetics.line.colour)
-    this.lib.stroke()
+    let points = [{ x: this.outerPadding.left + this.innerPadding.left, y: this.datapoints[0].y }, ...this.datapoints]
+    let line = new Line({ stroke: '#000' }, points)
+    this.renderer.add(line.getObject())
     return this
   }
   withLabels () {

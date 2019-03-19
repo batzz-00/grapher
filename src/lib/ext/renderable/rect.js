@@ -1,6 +1,6 @@
-import Sprite from './sprite'
-export default class Rect extends Sprite {
+import Shape from './shape'
+export default class Rect extends Shape {
   constructor (x, y, x2, y2) {
-    super([[x, y], [x2, y2]])
+    super([[x, y], [x2, y2]], 'line')
   }
 }

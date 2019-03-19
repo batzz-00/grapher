@@ -1,8 +1,7 @@
 export default class graphComponent {
-  constructor (options, data, lib) {
+  constructor (options, data) {
     this.options = options
     this.data = data
-    this.lib = lib
   }
   setupLayout () {
 

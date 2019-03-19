@@ -1,10 +1,10 @@
-import Poly from '../ext/renderable/poly'
+import Poly from '../renderable/poly'
 import graphComponent from './graphComponent'
 export default class Shadow extends graphComponent {
   setupLayout () {
 
   }
-  draw () {
+  getObject () {
     const { data } = this
     const { innerPadding, height, fill } = this.options
     let points = data.map(d => [d.x, d.y])
@@ -12,9 +12,5 @@ export default class Shadow extends graphComponent {
     let pol = new Poly(polyPoints)
     pol.setFill(fill)
     return pol
-    // let gradient = lib.createLinearGradient(0, 0, 0, (height * 1.2) ,gradient)
-    // lib.setFillStyle(gradient)
-    // lib.fill()
-    // return this
   }
 }

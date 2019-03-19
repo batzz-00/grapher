@@ -1,6 +1,6 @@
 import Shape from './shape'
 export default class Poly extends Shape {
-  constructor (points) {
-    super(points, 'polygon')
+  constructor (x, y, x2, y2) {
+    super([[x, y], [x2, y2]], 'line')
   }
 }

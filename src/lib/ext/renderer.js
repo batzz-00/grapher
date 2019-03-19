@@ -11,13 +11,16 @@ export default class Renderer {
   }
   render () {
     while (this.renderables.length !== 0) {
-      let renderable = this.renderables.pop()
+      let renderable = this.renderables.shift()
       // reset colours here maybe
 
       // draw
       switch (renderable.type) {
         case 'polygon':
           this.lib.drawPolygon(renderable.getPoints())
+          break
+        case 'segment':
+          this.lib.drawLines(renderable.getPoints())
           break
       }
 
@@ -27,8 +30,8 @@ export default class Renderer {
         this.lib.fill()
       }
       if (renderable.stroke) {
-        this.lib.setStrokeStyle(renderable.stroke)
-        this.lib.setStrokeWidth(renderable.strokeStyle.width || 1)
+        this.lib.setStrokeStyle(renderable.strokeStyle.colour)
+        this.lib.setStrokeWidth(renderable.strokeStyle.width)
         this.lib.stroke()
       }
     }
