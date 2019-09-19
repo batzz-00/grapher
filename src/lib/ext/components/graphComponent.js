@@ -4,6 +4,6 @@ export default class graphComponent {
     this.data = data
   }
   setupLayout () {
-
+    
   }
 }

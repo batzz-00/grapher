@@ -1,2 +1,2 @@
-export const GRADIENT = 'GRADIENT'
-export const FILL = 'FILL'
+export const gradient = 'gradient'
+export const fill = 'fill'

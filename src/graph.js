@@ -2,8 +2,14 @@ import CanvasLibrary from './helpers/canvasLibrary'
 
 import Shadow from './lib/ext/components/shadow'
 import Line from './lib/ext/components/line'
+import GridLines from './lib/ext/components/gridLines'
+import HoverLine from './lib/ext/components/hoverLine'
+import Border from './lib/ext/components/border'
+import Labels from './lib/ext/components/labels'
 
 import Renderer from './lib/ext/renderer'
+import Circles from './lib/ext/components/circles';
+import Background from './lib/ext/components/background';
 
 export default class graph {
   constructor (canvas, parent, options = {}) {
@@ -24,6 +30,15 @@ export default class graph {
     this.setSize()
     this.features()
     this.ready = false
+  
+  
+    let left = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-right').replace(' px', ''))
+    let right = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-left').replace(' px', ''))
+    let top = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-top').replace(' px', ''))
+    let bottom = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-bottom').replace(' px', ''))
+    this.width = (this.parent.offsetWidth - left - right)
+    this.height = (this.parent.offsetHeight - top - bottom)
+
     this.canvas.addEventListener('mousemove', (e) => {
       this.updateHoverLine(e)
     })
@@ -31,14 +46,15 @@ export default class graph {
   features () {
     this.features = [
       { key: 'withShadow', cb: this.withShadow.bind(this) },
+      { key: 'withFullShadow', cb: this.withFullShadow.bind(this) },
       { key: 'withBackground', cb: this.withBackground.bind(this) },
       { key: 'withCircles', cb: this.withCircles.bind(this) },
-      { key: 'withInfo', cb: this.withInfo.bind(this) },
       { key: 'withLabels', cb: this.withLabels.bind(this) },
       { key: 'withLine', cb: this.withLine.bind(this) },
       { key: 'withGridLines', cb: this.withGridLines.bind(this) },
       { key: 'withSideShade', cb: this.withSideShade.bind(this) },
-      { key: 'withHoverLine', cb: this.withHoverLine.bind(this) }
+      { key: 'withHoverLine', cb: this.withHoverLine.bind(this) },
+      { key: 'withBorder', cb: this.withBorder.bind(this) }
     ]
   }
   updateHoverLine (e) {
@@ -81,16 +97,15 @@ export default class graph {
       line: { width: 2, colour: 'rgba(57, 57, 57, 0.8)' },
       info: { colour: '#fff' },
       background: { colour: '#fff' },
-      hoverLine: { lineColour: '#090909', width: 2, textboxBackground: '#090909', textboxFontSize: 11, textboxTextColour: '#999999', boxWidth: 14, boxHeight: 7, radius: 3 },
+      hoverLine: { lineColour: '#090909', width: 2, textboxBackground: 'blue', textboxFontSize: 11, textboxTextColour: '#fff', boxWidth: 14, boxHeight: 7, radius: 3 },
       lastUpdated: { fontsize: 11 },
-      active: { activeColour: 'rgba(33, 218, 42, .8)', inactiveColour: '#f21212', border: 'rgba(38, 38, 38, .8)' },
       sideShade: { gradient: [
         { stop: 0, colour: 'rgba(22,22,22, 1)' },
         { stop: 0.3, colour: 'rgba(22,22,22, 0.7)' },
         { stop: 1, colour: 'rgba(0,0,0,0)' }
       ] },
       circles: { colour: '#fff', border: true, radius: 5, borderRadius: 1, borderColour: 'rgb(208, 208, 208)' },
-      gridLines: { width: 1, colour: '#000', border: [true, true, true, true], drawHorizontal: true, drawVertical: true },
+      gridLines: { width: 1, colour: '#dbdbdb', border: [true, true, true, true], drawHorizontal: true, drawVertical: true },
       shadow: { gradient: [
         { stop: 0, colour: '#3498db' },
         { stop: 1, colour: 'rgba(255, 255, 255,0)' }
@@ -104,8 +119,8 @@ export default class graph {
       }
     }
     return {
-      outerPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-      innerPadding: { top: 5, bottom: 5, left: 0, right: 0 },
+      outerPadding: { top: 20, bottom: 20, left: 20, right: 20 },
+      innerPadding: { top: 0, bottom: 0, left: 0, right: 0 },
       build: ['withBackground', 'withGridLines', 'withLine'],
       fontsize: 14,
       font: 'Arial',
@@ -126,12 +141,6 @@ export default class graph {
     return false
   }
   setSize () {
-    let left = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-right').replace(' px', ''))
-    let right = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-left').replace(' px', ''))
-    let top = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-top').replace(' px', ''))
-    let bottom = parseInt(window.getComputedStyle(this.parent).getPropertyValue('padding-bottom').replace(' px', ''))
-    this.width = (this.parent.offsetWidth - left - right)
-    this.height = (this.parent.offsetHeight - top - bottom)
     this.drawableWidth = this.width - (this.outerPadding.left + this.outerPadding.right + this.innerPadding.left + this.innerPadding.right)
     this.drawableHeight = this.height - (this.outerPadding.top + this.outerPadding.bottom + this.innerPadding.bottom + this.innerPadding.top)
     this.outerWidth = this.width - (this.outerPadding.left + this.outerPadding.right)
@@ -209,173 +218,98 @@ export default class graph {
       this.drawableHeight + this.innerPadding.top + this.outerPadding.top)
   }
   withHoverLine () {
-    let split = (this.drawableWidth / (this.datapoints.length)) / 2
-    // let paddingTotal = (this.outerPadding.left + this.outerPadding.right + this.innerPadding.left + this.innerPadding.right)
-
-    let paddingTotal = (this.outerPadding.left)
-    let options = this.options.aesthetics.hoverLine
-    for (let i in this.datapoints) {
-      if ((Math.abs(this.mousePos.x - this.datapoints[i].x) - paddingTotal) < split) {
-        let x = this.datapoints[i].x
-        let y = this.datapoints[i].y
-
-        // Hover line
-        this.lib.setLineWidth(options.width)
-        this.lib.setStrokeStyle(options.lineColour)
-        this.lib.drawLine(x, this.outerPadding.top, x, this.outerPadding.top + this.outerHeight)
-        this.lib.stroke()
-
-        // Make sure X and Y bounds dont go above or minus 0/height and left/right
-        if (x + options.boxWidth > this.width) {
-          x -= options.boxWidth
-        }
-        if (y + options.boxHeight > this.height) {
-          y -= options.boxHeight
-        }
-        if (y - options.boxHeight < 0) {
-          y += options.boxHeight
-        }
-        if (x - options.boxWidth < 0) {
-          x += options.boxWidth
-        }
-
-        // Hover line text box
-        this.lib.drawRoundedRectangle(x, y, options.boxWidth, options.boxHeight, options.radius)
-        this.lib.setFillStyle(options.textboxBackground)
-        this.lib.fill()
-
-        // Hover line text
-        this.lib.setTextBaseline('middle')
-        this.lib.setTextAlign('center')
-        this.lib.setFont(this.font, options.textboxFontSize, 600)
-        this.lib.setFillStyle(options.textboxTextColour)
-        this.lib.drawText(this.datapoints[i].display, x, y)
-
-        // break to stop waste of loop
-        break
-      }
+    const { drawableWidth, datapoints, outerPadding, outerHeight, mousePos, width, height } = this
+    const { font } = this.options
+    const { width: lineWidth, lineColour, boxWidth, boxHeight, radius, textboxBackground, textboxFontSize, textboxTextColour} = this.options.aesthetics.hoverLine
+    let hoverLine = new HoverLine({drawableWidth, datapoints, outerPadding, outerHeight, mousePos, width, height, font, 
+                                      lineWidth, lineColour, boxWidth, boxHeight, radius, textboxFontSize, textboxBackground, textboxTextColour }, datapoints)
+    if(hoverLine.getLine()){
+      this.renderer.add(hoverLine.getLine())
+      this.renderer.add(hoverLine.getTextboxBg())
+      this.renderer.add(hoverLine.getText())
     }
-  }
-
-  withInfo () {
-    // Text aligns and style
-    this.lib.setTextAlign('left')
-    this.lib.setTextBaseline('alphabetic')
-    this.lib.setFillStyle(this.options.aesthetics.info.colour)
-
-    // Draw name of sensor
-    this.lib.setFont(this.options.font, this.options.fontsize, 600)
-    this.lib.drawText(this.options.name, 35, 25)
-
-    // Draw current reading of sensor
-    this.lib.setFont(this.options.font, this.options.fontsize - 2, 400)
-    this.lib.drawText(this.data[this.data.length - 1].reading + '° C', 15, 45)
-
-    return this
-  }
+  } 
   withSideShade () {
     let gradient = this.lib.createLinearGradient(0, 0, this.width, 0, this.options.aesthetics.sideShade.gradient)
     this.lib.setFillStyle(gradient)
     this.lib.fillRectangle(0, 0, this.width, this.height)
     return this
   }
-  withActive () {
-    this.lib.setStrokeStyle(this.options.aesthetics.active.border)
-    if (this.options.active) {
-      this.lib.setFillStyle(this.options.aesthetics.active.activeColour)
-    } else {
-      this.lib.setFillStyle(this.options.aesthetics.active.inactiveColour)
-    }
-    this.lib.drawCircle(this.width - 15, 16, 5, 0, 2 * Math.PI)
-    this.lib.fill()
-    this.lib.stroke()
-    return this
-  }
   withBackground () {
-    this.lib.setFillStyle(this.options.aesthetics.background.colour)
-    this.lib.fillRectangle(0, 0, this.width, this.height)
+    const { colour } = this.options.aesthetics.background
+    const { width, height } = this
+
+    let background = new Background({colour, width, height})
+
+    this.renderer.add(background.getObject())
     return this
   }
   withCircles () {
     const { colour, radius, border, borderRadius, borderColour } = this.options.aesthetics.circles
-    this.datapoints.forEach(d => {
-      if (border) {
-        this.lib.setFillStyle(borderColour)
-        this.lib.drawCircle(d.x, d.y, radius + borderRadius, 0, 2 * Math.PI)
-        this.lib.fill()
-      }
-      this.lib.setFillStyle(colour)
-      this.lib.drawCircle(d.x, d.y, radius, 0, 2 * Math.PI)
-      this.lib.fill()
-    })
+
+    let circles = new Circles({colour, radius, border, borderRadius, borderColour}, this.datapoints)
+    circles.circles().forEach(r => this.renderer.add(r))
     return this
   }
   withGridLines () {
-    let horizontal = this.options.lines.horizontal
-    let vertical = this.options.lines.vertical
-    const { drawHorizontal, drawVertical, border } = this.options.aesthetics.gridLines
+    const { horizontal, vertical } = this.options.lines
+    const { colour, width } = this.options.aesthetics.gridLines
+    const { innerPadding, outerPadding, height, outerWidth, outerHeight } = this
 
-    this.lib.setLineWidth(this.options.aesthetics.gridLines.width)
-    this.lib.setStrokeStyle(this.options.aesthetics.gridLines.colour)
-
-    if (border) {
-      this.lib.drawRectangle(this.outerPadding.left, this.outerPadding.top, this.outerWidth, this.outerHeight)
-      this.lib.stroke()
-    }
-    if (drawVertical) {
-      for (let i = 1; i <= vertical; i++) {
-        let v = vertical + 1
-        this.lib.drawLine(Math.round(this.outerWidth / v * i) + this.outerPadding.left, this.outerPadding.top,
-          Math.round(this.outerWidth / v * i) + this.outerPadding.left, this.outerHeight + this.outerPadding.top)
-        this.lib.stroke()
-      }
-    }
-    if (drawHorizontal) {
-      for (let i = 1; i <= horizontal; i++) {
-        let h = horizontal + 1
-        this.lib.drawLine(this.outerPadding.left, this.outerPadding.top + (Math.round(this.outerHeight / h) * i),
-          this.outerPadding.left + this.outerWidth, this.outerPadding.top + (Math.round(this.outerHeight / h) * i))
-        this.lib.stroke()
-      }
-    }
+    let gridLines = new GridLines({innerPadding, outerPadding, height, colour, vertical, horizontal, outerWidth, outerHeight, width})
+    
+    gridLines.verticalLines().forEach(line => this.renderer.add(line))
+    gridLines.horizontalLines().forEach(line => this.renderer.add(line))
     return this
   }
+  withBorder () {
+    const { colour, width } = this.options.aesthetics.gridLines
+    const { innerPadding, outerPadding, height, outerWidth, outerHeight } = this
+
+    let border = new Border({innerPadding, outerPadding, height, colour, outerWidth, outerHeight, width})
+
+    this.renderer.add(border.getObject())
+  }
+  // refactor these get options destructured here then send it to shadow
   withShadow () {
-    let gradient = this.lib.createLinearGradient(0, 0, 0, (this.height * 1.2), this.options.aesthetics.shadow.gradient)
-    let data = this.datapoints
-    let points = [{ x: this.innerPadding.left, y: data[0].y },
-      ...data, { x: data[data.length - 1].x, y: this.height - this.innerPadding.bottom }, { x: this.innerPadding.left, y: this.height - this.innerPadding.bottom }]
-    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: gradient }, points)
-    this.renderer.add(o.getObject())
+    const { gradient } = this.options.aesthetics.shadow
+    const { height, width, datapoints, outerPadding, innerPadding } = this
+    let fill = {x: 0, y: 0, x2: 0, y2: (this.height * 1.2), stops: gradient}
+
+    let shadow = new Shadow({height, width, fill, outerPadding, innerPadding, gradient: true}, datapoints)
+
+    this.renderer.add(shadow.getObject())
     return this
   }
   withFullShadow () {
-    let data = this.datapoints
-    let points = [{ x: this.innerPadding.left, y: data[0].y },
-      ...data, { x: data[data.length - 1].x, y: this.height - this.innerPadding.bottom }, { x: this.innerPadding.left, y: this.height - this.innerPadding.bottom }]
-    let o = new Shadow({ ...this.options, height: this.height, width: this.width, fill: this.options.aesthetics.fullShadow.colour }, points)
-    this.renderer.add(o.getObject())
+    const { height, width, datapoints, outerPadding, innerPadding } = this
+    const { colour } = this.options.aesthetics.fullShadow
+
+    let shadow = new Shadow({ height, width, datapoints, outerPadding, colour, innerPadding }, datapoints)
+
+    this.renderer.add(shadow.getObject())
     return this
   }
   withLine () {
-    let points = [{ x: this.outerPadding.left + this.innerPadding.left, y: this.datapoints[0].y }, ...this.datapoints]
-    let line = new Line({ stroke: '#000' }, points)
+    const { outerPadding, innerPadding, datapoints } = this
+    const { colour } = this.options.aesthetics.line
+    
+    let line = new Line({ stroke: colour, outerPadding, innerPadding }, datapoints)
+
     this.renderer.add(line.getObject())
     return this
   }
-  withLabels () {
-    this.lib.setFillStyle(this.options.aesthetics.labels.colour)
-    this.lib.setFont(this.options.aesthetics.font, this.options.aesthetics.labels.fontsize, 600)
-    this.lib.setTextAlign('left')
-    this.lib.setTextBaseline('middle')
+  withLabels () {    
+    let width = this.drawableWidth - this.lib.textMetrics(this.crest).width
 
-    this.drawableWidth -= this.lib.textMetrics(this.crest).width
+    const { font, labels } = this.options.aesthetics
+    const { fontsize, colour } = labels
 
-    this.lib.drawText(this.crest, this.outerPadding.left + this.innerPadding.left + this.drawableWidth + 3, this.outerPadding.top + this.innerPadding.top)
+    let label = new Labels({ font, size: fontsize, thickness: 600, baseline: 'middle', align: 'left', colour}, 
+                        {text: this.crest, x: this.outerPadding.left + this.innerPadding.left + width + 3, y: this.outerPadding.top + this.innerPadding.top})
+    
+    this.renderer.add(label.label())
 
-    this.lib.setTextAlign('left')
-    this.lib.setTextBaseline('middle')
-    this.lib.drawText(this.trough, this.outerPadding.left + this.innerPadding.left + this.drawableWidth + 3, this.drawableHeight + this.outerPadding.top + this.innerPadding.top)
     return this
   }
 }

@@ -6,8 +6,9 @@ export default class Line extends graphComponent {
   }
   getObject () {
     const { data } = this
-    const { stroke } = this.options
-    let points = data.map(d => [d.x, d.y])
+    const { stroke, outerPadding, innerPadding } = this.options
+    let points = [{ x: outerPadding.left + innerPadding.left, y: data[0].y }, ...data]
+    points = points.map(d => [d.x, d.y])
     let pol = new Segment(points)
     pol.setStroke(stroke)
     return pol
